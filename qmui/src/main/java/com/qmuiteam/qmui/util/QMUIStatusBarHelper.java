@@ -97,30 +97,29 @@ public class QMUIStatusBarHelper {
      *
      * @param activity 需要被处理的 Activity
      */
-    public static void setStatusBarLightMode(Activity activity) {
+    public static boolean setStatusBarLightMode(Activity activity) {
         // 无语系列：ZTK C2016只能时间和电池图标变色。。。。
         if(QMUIDeviceHelper.isZTKC2016()){
-            return;
+            return false;
         }
 
         if (mStatuBarType != STATUSBAR_TYPE_DEFAULT) {
-            setStatusBarLightMode(activity, mStatuBarType);
-            return;
+            return setStatusBarLightMode(activity, mStatuBarType);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            if (MIUISetStatusBarLightMode(activity.getWindow(), true)) {
-                mStatuBarType = 1;
+            if (isMIUICustomStatusBarLightModeImpl() && MIUISetStatusBarLightMode(activity.getWindow(), true)) {
+                mStatuBarType = STATUSBAR_TYPE_MIUI;
+                return true;
             } else if (FlymeSetStatusBarLightMode(activity.getWindow(), true)) {
-                mStatuBarType = 2;
+                mStatuBarType = STATUSBAR_TYPE_FLYME;
+                return true;
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                Window window = activity.getWindow();
-                View decorView = window.getDecorView();
-                int systemUi = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                systemUi = changeStatusBarModeRetainFlag(window, systemUi);
-                decorView.setSystemUiVisibility(systemUi);
-                mStatuBarType = 3;
+                Android6SetStatusBarLightMode(activity.getWindow(), true);
+                mStatuBarType = STATUSBAR_TYPE_ANDROID6;
+                return true;
             }
         }
+        return false;
     }
 
     /**
@@ -130,44 +129,39 @@ public class QMUIStatusBarHelper {
      * @param activity 需要被处理的 Activity
      * @param type     StatusBar 类型，对应不同的系统
      */
-    private static void setStatusBarLightMode(Activity activity, @StatusBarType int type) {
+    private static boolean setStatusBarLightMode(Activity activity, @StatusBarType int type) {
         if (type == STATUSBAR_TYPE_MIUI) {
-            MIUISetStatusBarLightMode(activity.getWindow(), true);
+            return MIUISetStatusBarLightMode(activity.getWindow(), true);
         } else if (type == STATUSBAR_TYPE_FLYME) {
-            FlymeSetStatusBarLightMode(activity.getWindow(), true);
+            return FlymeSetStatusBarLightMode(activity.getWindow(), true);
         } else if (type == STATUSBAR_TYPE_ANDROID6) {
-            Window window = activity.getWindow();
-            View decorView = window.getDecorView();
-            int systemUi = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            systemUi = changeStatusBarModeRetainFlag(window, systemUi);
-            decorView.setSystemUiVisibility(systemUi);
+            return Android6SetStatusBarLightMode(activity.getWindow(), true);
         }
-
+        return false;
     }
+
 
     /**
      * 设置状态栏白色字体图标
      * 支持 4.4 以上版本 MIUI 和 Flyme，以及 6.0 以上版本的其他 Android
      */
-    public static void setStatusBarDarkMode(Activity activity) {
+    public static boolean setStatusBarDarkMode(Activity activity) {
         if (mStatuBarType == STATUSBAR_TYPE_DEFAULT) {
             // 默认状态，不需要处理
-            return;
+            return true;
         }
 
         if (mStatuBarType == STATUSBAR_TYPE_MIUI) {
-            MIUISetStatusBarLightMode(activity.getWindow(), false);
+            return MIUISetStatusBarLightMode(activity.getWindow(), false);
         } else if (mStatuBarType == STATUSBAR_TYPE_FLYME) {
-            FlymeSetStatusBarLightMode(activity.getWindow(), false);
+            return FlymeSetStatusBarLightMode(activity.getWindow(), false);
         } else if (mStatuBarType == STATUSBAR_TYPE_ANDROID6) {
-            Window window = activity.getWindow();
-            View decorView = window.getDecorView();
-            int systemUi = View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-            systemUi = changeStatusBarModeRetainFlag(window, systemUi);
-            decorView.setSystemUiVisibility(systemUi);
+            return Android6SetStatusBarLightMode(activity.getWindow(), false);
         }
+        return true;
     }
 
+    @TargetApi(23)
     private static int changeStatusBarModeRetainFlag(Window window, int out) {
         out = retainSystemUiFlag(window, out, View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         out = retainSystemUiFlag(window, out, View.SYSTEM_UI_FLAG_FULLSCREEN);
@@ -184,6 +178,23 @@ public class QMUIStatusBarHelper {
             out |= type;
         }
         return out;
+    }
+
+
+    /**
+     * 设置状态栏字体图标为深色，Android 6
+     *
+     * @param window 需要设置的窗口
+     * @param light   是否把状态栏字体及图标颜色设置为深色
+     * @return boolean 成功执行返回true
+     */
+    @TargetApi(23)
+    private static boolean Android6SetStatusBarLightMode(Window window, boolean light){
+        View decorView = window.getDecorView();
+        int systemUi = light ? View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR : View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+        systemUi = changeStatusBarModeRetainFlag(window, systemUi);
+        decorView.setSystemUiVisibility(systemUi);
+        return true;
     }
 
     /**
@@ -214,6 +225,17 @@ public class QMUIStatusBarHelper {
             }
         }
         return result;
+    }
+
+    /**
+     * 更改状态栏图标、文字颜色的方案是否是MIUI自家的， MIUI9之后用回Android原生实现
+     * 见小米开发文档说明：https://dev.mi.com/console/doc/detail?pId=1159
+     *
+     * @return
+     */
+    private static boolean isMIUICustomStatusBarLightModeImpl(){
+        return QMUIDeviceHelper.isMIUIV5() || QMUIDeviceHelper.isMIUIV6() ||
+                QMUIDeviceHelper.isMIUIV7() || QMUIDeviceHelper.isMIUIV8();
     }
 
     /**

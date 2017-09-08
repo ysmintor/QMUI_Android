@@ -3,6 +3,7 @@ package com.qmuiteam.qmuidemo.base;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.FrameLayout;
 
 import com.qmuiteam.qmui.util.QMUIStatusBarHelper;
@@ -10,7 +11,7 @@ import com.qmuiteam.qmui.util.QMUIStatusBarHelper;
 /**
  * Created by cgspine on 15/9/14.
  */
-public abstract class BaseFragmentActivity extends FragmentActivity {
+public abstract class BaseFragmentActivity extends AppCompatActivity {
 
     protected abstract int getContextViewId();
 
@@ -52,8 +53,12 @@ public abstract class BaseFragmentActivity extends FragmentActivity {
      * 返回
      */
     public void popBackStack() {
-        if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
+        if (getSupportFragmentManager().getBackStackEntryCount() <= 1) {
             BaseFragment fragment = getCurrentFragment();
+            if(fragment == null){
+                finish();
+                return;
+            }
             BaseFragment.TransitionConfig transitionConfig = fragment.onFetchTransitionConfig();
             Object toExec = fragment.onLastFragmentFinish();
             if (toExec != null) {
