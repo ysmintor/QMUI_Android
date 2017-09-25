@@ -1,5 +1,6 @@
 package com.qmuiteam.qmui.widget.dialog;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Typeface;
@@ -28,9 +29,9 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.qmuiteam.qmui.util.QMUIDisplayHelper;
 import com.qmuiteam.qmui.QMUILog;
 import com.qmuiteam.qmui.R;
+import com.qmuiteam.qmui.util.QMUIDisplayHelper;
 import com.qmuiteam.qmui.util.QMUILangHelper;
 import com.qmuiteam.qmui.util.QMUIResHelper;
 
@@ -72,6 +73,7 @@ public class QMUIBottomSheet extends Dialog {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //noinspection ConstantConditions
         getWindow().getDecorView().setPadding(0, 0, 0, 0);
 
         // 在底部，宽度撑满
@@ -93,12 +95,6 @@ public class QMUIBottomSheet extends Dialog {
     }
 
     @Override
-    public void setContentView(@NonNull View view) {
-        mContentView = view;
-        super.setContentView(view);
-    }
-
-    @Override
     public void setContentView(@NonNull View view, ViewGroup.LayoutParams params) {
         mContentView = view;
         super.setContentView(view, params);
@@ -106,6 +102,12 @@ public class QMUIBottomSheet extends Dialog {
 
     public View getContentView() {
         return mContentView;
+    }
+
+    @Override
+    public void setContentView(@NonNull View view) {
+        mContentView = view;
+        super.setContentView(view);
     }
 
     /**
@@ -236,10 +238,9 @@ public class QMUIBottomSheet extends Dialog {
         }
 
         /**
-         * 设置要被选中的 Item 的下标
+         * 设置要被选中的 Item 的下标。
          * <p>
-         *     注意:仅当 {@link #mNeedRightMark} 为 true 时才有效
-         * </p>
+         * 注意:仅当 {@link #mNeedRightMark} 为 true 时才有效。
          */
         public BottomListSheetBuilder setCheckedIndex(int checkedIndex) {
             mCheckedIndex = checkedIndex;
@@ -247,7 +248,7 @@ public class QMUIBottomSheet extends Dialog {
         }
 
         /**
-         * @param textAndTag name与tag相同
+         * @param textAndTag Item 的文字内容，同时会把内容设置为 tag。
          */
         public BottomListSheetBuilder addItem(String textAndTag) {
             mItems.add(new BottomSheetListItemData(textAndTag, textAndTag));
@@ -255,17 +256,17 @@ public class QMUIBottomSheet extends Dialog {
         }
 
         /**
-         * @param image icon
-         * @param text  name与tag相同
+         * @param image      icon Item 的 icon。
+         * @param textAndTag Item 的文字内容，同时会把内容设置为 tag。
          */
-        public BottomListSheetBuilder addItem(Drawable image, String text) {
-            mItems.add(new BottomSheetListItemData(image, text, text));
+        public BottomListSheetBuilder addItem(Drawable image, String textAndTag) {
+            mItems.add(new BottomSheetListItemData(image, textAndTag, textAndTag));
             return this;
         }
 
         /**
-         * @param text
-         * @param tag
+         * @param text Item 的文字内容。
+         * @param tag  item 的 tag。
          */
         public BottomListSheetBuilder addItem(String text, String tag) {
             mItems.add(new BottomSheetListItemData(text, tag));
@@ -273,9 +274,9 @@ public class QMUIBottomSheet extends Dialog {
         }
 
         /**
-         * @param imageRes icon res
-         * @param text
-         * @param tag
+         * @param imageRes Item 的图标 Resource。
+         * @param text     Item 的文字内容。
+         * @param tag      Item 的 tag。
          */
         public BottomListSheetBuilder addItem(int imageRes, String text, String tag) {
             Drawable drawable = imageRes != 0 ? ContextCompat.getDrawable(mContext, imageRes) : null;
@@ -284,10 +285,10 @@ public class QMUIBottomSheet extends Dialog {
         }
 
         /**
-         * @param imageRes    icon res
-         * @param text
-         * @param tag
-         * @param hasRedPoint 是否有红点
+         * @param imageRes    Item 的图标 Resource。
+         * @param text        Item 的文字内容。
+         * @param tag         Item 的 tag。
+         * @param hasRedPoint 是否显示红点。
          */
         public BottomListSheetBuilder addItem(int imageRes, String text, String tag, boolean hasRedPoint) {
             Drawable drawable = imageRes != 0 ? ContextCompat.getDrawable(mContext, imageRes) : null;
@@ -296,11 +297,11 @@ public class QMUIBottomSheet extends Dialog {
         }
 
         /**
-         * @param imageRes    icon res
-         * @param text
-         * @param tag
-         * @param hasRedPoint 是否有红点
-         * @param disabled    是否disabled
+         * @param imageRes    Item 的图标 Resource。
+         * @param text        Item 的文字内容。
+         * @param tag         Item 的 tag。
+         * @param hasRedPoint 是否显示红点。
+         * @param disabled    是否显示禁用态。
          */
         public BottomListSheetBuilder addItem(int imageRes, String text, String tag, boolean hasRedPoint, boolean disabled) {
             Drawable drawable = imageRes != 0 ? ContextCompat.getDrawable(mContext, imageRes) : null;
@@ -453,6 +454,13 @@ public class QMUIBottomSheet extends Dialog {
             }
         }
 
+        private static class ViewHolder {
+            ImageView imageView;
+            TextView textView;
+            View markView;
+            View redPoint;
+        }
+
         private class ListAdapter extends BaseAdapter {
 
             @Override
@@ -541,23 +549,12 @@ public class QMUIBottomSheet extends Dialog {
             }
         }
 
-        private static class ViewHolder {
-            ImageView imageView;
-            TextView textView;
-            View markView;
-            View redPoint;
-        }
-
     }
 
     /**
      * 生成宫格类型的 {@link QMUIBottomSheet} 对话框。
      */
     public static class BottomGridSheetBuilder implements View.OnClickListener {
-
-        public interface OnSheetItemClickListener {
-            void onClick(QMUIBottomSheet dialog, View itemView);
-        }
 
         /**
          * item 出现在第一行
@@ -567,18 +564,10 @@ public class QMUIBottomSheet extends Dialog {
          * item 出现在第二行
          */
         public static final int SECOND_LINE = 1;
-
-        @Retention(RetentionPolicy.SOURCE)
-        @IntDef({FIRST_LINE, SECOND_LINE})
-        public @interface Style {
-        }
-
         private Context mContext;
-
         private QMUIBottomSheet mDialog;
         private SparseArray<View> mFirstLineViews;
         private SparseArray<View> mSecondLineViews;
-
         private int mMiniItemWidth = -1;
         private OnSheetItemClickListener mOnSheetItemClickListener;
         private Typeface mItemTextTypeFace = null;
@@ -630,10 +619,10 @@ public class QMUIBottomSheet extends Dialog {
         public BottomGridSheetBuilder addItem(int imageRes, CharSequence text, Object tag, @Style int style, int subscriptRes) {
             LayoutInflater inflater = LayoutInflater.from(mContext);
             // 给机会让用的人自定义ItemView
-            LinearLayout itemView = (LinearLayout) inflater.inflate(R.layout.qmui_bottom_sheet_grid_item, null, false);
+            @SuppressLint("InflateParams") LinearLayout itemView = (LinearLayout) inflater.inflate(R.layout.qmui_bottom_sheet_grid_item, null, false);
             // 字体加粗
             TextView titleTV = (TextView) itemView.findViewById(R.id.grid_item_title);
-            if(mItemTextTypeFace != null){
+            if (mItemTextTypeFace != null) {
                 titleTV.setTypeface(mItemTextTypeFace);
             }
             titleTV.setText(text);
@@ -732,25 +721,25 @@ public class QMUIBottomSheet extends Dialog {
             }
 
             // button 在用户自定义了contentView的情况下可能不存在
-            if(mBottomButton != null){
-                if(mIsShowButton){
+            if (mBottomButton != null) {
+                if (mIsShowButton) {
                     mBottomButton.setVisibility(View.VISIBLE);
-                    int dimen = QMUIResHelper.getAttrDimen(mContext,R.attr.qmui_bottom_sheet_grid_padding_vertical);
-                    baseLinearLayout.setPadding(0,dimen,0,0);
-                }else {
+                    int dimen = QMUIResHelper.getAttrDimen(mContext, R.attr.qmui_bottom_sheet_grid_padding_vertical);
+                    baseLinearLayout.setPadding(0, dimen, 0, 0);
+                } else {
                     mBottomButton.setVisibility(View.GONE);
                 }
-                if(mBottomButtonTypeFace != null){
+                if (mBottomButtonTypeFace != null) {
                     mBottomButton.setTypeface(mBottomButtonTypeFace);
                 }
-                if(mButtonText != null) {
+                if (mButtonText != null) {
                     mBottomButton.setText(mButtonText);
                 }
 
-                if(mButtonClickListener != null) {
+                if (mButtonClickListener != null) {
                     mBottomButton.setOnClickListener(mButtonClickListener);
-                }else {
-                    mBottomButton.setOnClickListener(new View.OnClickListener(){
+                } else {
+                    mBottomButton.setOnClickListener(new View.OnClickListener() {
 
                         @Override
                         public void onClick(View v) {
@@ -813,6 +802,15 @@ public class QMUIBottomSheet extends Dialog {
                 itemView.setLayoutParams(itemLp);
             }
             itemLp.gravity = Gravity.TOP;
+        }
+
+        public interface OnSheetItemClickListener {
+            void onClick(QMUIBottomSheet dialog, View itemView);
+        }
+
+        @Retention(RetentionPolicy.SOURCE)
+        @IntDef({FIRST_LINE, SECOND_LINE})
+        public @interface Style {
         }
     }
 }

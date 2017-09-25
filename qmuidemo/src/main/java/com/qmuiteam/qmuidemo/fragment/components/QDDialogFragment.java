@@ -30,12 +30,14 @@ import com.qmuiteam.qmuidemo.base.BaseFragment;
 import com.qmuiteam.qmuidemo.lib.annotation.Widget;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
+ * {@link QMUIDialog} 的使用示例。
  * Created by cgspine on 15/9/15.
  */
 @Widget(widgetClass = QMUIDialog.class, iconRes = R.mipmap.icon_grid_dialog)
@@ -81,9 +83,7 @@ public class QDDialogFragment extends BaseFragment {
         };
         List<String> data = new ArrayList<>();
 
-        for (String listItem : listItems) {
-            data.add(listItem);
-        }
+        Collections.addAll(data, listItems);
 
         mListView.setAdapter(new ArrayAdapter<>(getActivity(), R.layout.simple_list_item, data));
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {

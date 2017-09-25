@@ -524,11 +524,7 @@ public class QMUIQQFaceView extends View {
             mNeedDrawLine = mMaxLine;
         }
 
-        if (mLines > mNeedDrawLine) {
-            mIsNeedEllipsize = true;
-        } else {
-            mIsNeedEllipsize = false;
-        }
+        mIsNeedEllipsize = mLines > mNeedDrawLine;
     }
 
     private void calculateLinesInner(List<QMUIQQFaceCompiler.Element> elements, int limitWidth) {
@@ -805,8 +801,7 @@ public class QMUIQQFaceView extends View {
     }
 
     /**
-     * @param startLeft
-     * @param paragraph 是否是段落切换
+     * 控制段落切换
      */
     private void toNewDrawLine(int startLeft, boolean paragraph) {
         int addOn = (paragraph ? mParagraphSpace : 0) + mLineSpace;
@@ -1254,6 +1249,7 @@ public class QMUIQQFaceView extends View {
             invalidate(bounds);
         }
 
+        @SuppressWarnings("SimplifiableIfStatement")
         public boolean onTouch(int x, int y) {
             int top = getPaddingTop();
             if (mStartLine > 1) {
@@ -1273,6 +1269,7 @@ public class QMUIQQFaceView extends View {
             int startLineBottom = top + mFontHeight;
             int endLineTop = bottom - mFontHeight;
             if (y > startLineBottom && y < endLineTop) {
+                //noinspection SimplifiableIfStatement
                 if (mEndLine - mStartLine == 1) {
                     return x >= mStartPoint && x <= mEndPoint;
                 }

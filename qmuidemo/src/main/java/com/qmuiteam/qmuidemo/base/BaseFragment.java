@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethod;
@@ -19,20 +20,26 @@ import com.qmuiteam.qmui.widget.QMUIWindowInsetLayout;
 import com.qmuiteam.qmuidemo.R;
 
 /**
+ * 基础 Fragment 类，提供各种基础功能。
  * Created by cgspine on 15/9/14.
  */
 public abstract class BaseFragment extends Fragment {
-    private static final String TAG = BaseFragment.class.getSimpleName();
+    // 资源，放在业务初始化，会在业务层
+    protected static final TransitionConfig SLIDE_TRANSITION_CONFIG = new TransitionConfig(
+            R.anim.slide_in_right, R.anim.slide_out_left,
+            R.anim.slide_in_left, R.anim.slide_out_right);
 
 
     //============================= UI ================================
-
+    protected static final TransitionConfig SCALE_TRANSITION_CONFIG = new TransitionConfig(
+            R.anim.scale_enter, R.anim.slide_still, R.anim.slide_still,
+            R.anim.scale_exit);
+    private static final String TAG = BaseFragment.class.getSimpleName();
     private View mBaseView;
 
     public BaseFragment() {
         super();
     }
-
 
     public final BaseFragmentActivity getBaseFragmentActivity() {
         return (BaseFragmentActivity) getActivity();
@@ -41,7 +48,6 @@ public abstract class BaseFragment extends Fragment {
     public boolean isAttachedToActivity() {
         return !isRemoving() && mBaseView != null;
     }
-
 
     protected void startFragment(BaseFragment fragment) {
         BaseFragmentActivity baseFragmentActivity = this.getBaseFragmentActivity();
@@ -55,7 +61,6 @@ public abstract class BaseFragment extends Fragment {
             Log.e("BaseFragment", "startFragment null:" + this);
         }
     }
-
 
     /**
      * 显示键盘
@@ -75,36 +80,6 @@ public abstract class BaseFragment extends Fragment {
         return imm.hideSoftInputFromWindow(getActivity().findViewById(android.R.id.content)
                 .getWindowToken(), 0);
     }
-
-    ////////界面跳转动画
-    public static final class TransitionConfig {
-        public final int enter;
-        public final int exit;
-        public final int popenter;
-        public final int popout;
-
-        public TransitionConfig(int enter, int popout) {
-            this(enter, 0, 0, popout);
-        }
-
-        public TransitionConfig(int enter, int exit, int popenter, int popout) {
-            this.enter = enter;
-            this.exit = exit;
-            this.popenter = popenter;
-            this.popout = popout;
-        }
-    }
-
-    // 资源，放在业务初始化，会在业务层
-    protected static final TransitionConfig SLIDE_TRANSITION_CONFIG = new TransitionConfig(
-            R.anim.slide_in_right, R.anim.slide_out_left,
-            R.anim.slide_in_left, R.anim.slide_out_right);
-    protected static final TransitionConfig SCALE_TRANSITION_CONFIG = new TransitionConfig(
-            R.anim.scale_enter, R.anim.slide_still, R.anim.slide_still,
-            R.anim.scale_exit);
-
-
-    //============================= 生命周期 ================================
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -126,6 +101,9 @@ public abstract class BaseFragment extends Fragment {
         QMUIViewHelper.requestApplyInsets(getActivity().getWindow());
     }
 
+
+    //============================= 生命周期 ================================
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (mBaseView.getParent() != null) {
@@ -140,6 +118,15 @@ public abstract class BaseFragment extends Fragment {
 
     @Override
     public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+        if (!enter && getParentFragment() != null && getParentFragment().isRemoving()) {
+            // This is a workaround for the bug where child fragments disappear when
+            // the parent is removed (as all children are first removed from the parent)
+            // See https://code.google.com/p/android/issues/detail?id=55228
+            Animation doNothingAnim = new AlphaAnimation(1, 1);
+            doNothingAnim.setDuration(R.integer.qmui_anim_duration);
+            return doNothingAnim;
+        }
+
         // bugfix: 使用scale enter时看不到效果， 因为两个fragment的动画在同一个层级，被退出动画遮挡了
         // http://stackoverflow.com/questions/13005961/fragmenttransaction-animation-to-slide-in-over-top#33816251
         if (nextAnim != R.anim.scale_enter || !enter) {
@@ -178,48 +165,58 @@ public abstract class BaseFragment extends Fragment {
                 }
             });
             return nextAnimation;
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         return null;
     }
 
-    //============================= 新流程 ================================
-
     /**
      * onCreateView
-     *
-     * @return
      */
     protected abstract View onCreateView();
 
+    //============================= 新流程 ================================
 
     /**
-     * 沉浸式处理，返回false，则状态栏下为内容区域; 返回true, 则状态栏下为padding区域
-     *
-     * @return
+     * 沉浸式处理，返回 false，则状态栏下为内容区域，返回 true, 则状态栏下为 padding 区域
      */
     protected boolean translucentFull() {
         return false;
     }
 
-
     /**
-     * 如果是最后一个Fragment,finish后执行的方法
-     *
-     * @return
+     * 如果是最后一个Fragment，finish后执行的方法
      */
+    @SuppressWarnings("SameReturnValue")
     public Object onLastFragmentFinish() {
         return null;
     }
 
     /**
      * 转场动画控制
-     *
-     * @return
      */
     public TransitionConfig onFetchTransitionConfig() {
         return SLIDE_TRANSITION_CONFIG;
+    }
+
+    ////////界面跳转动画
+    public static final class TransitionConfig {
+        public final int enter;
+        public final int exit;
+        public final int popenter;
+        public final int popout;
+
+        public TransitionConfig(int enter, int popout) {
+            this(enter, 0, 0, popout);
+        }
+
+        public TransitionConfig(int enter, int exit, int popenter, int popout) {
+            this.enter = enter;
+            this.exit = exit;
+            this.popenter = popenter;
+            this.popout = popout;
+        }
     }
 }
 

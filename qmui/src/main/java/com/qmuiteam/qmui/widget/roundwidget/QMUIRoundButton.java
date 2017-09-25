@@ -5,6 +5,7 @@ import android.util.AttributeSet;
 import android.widget.Button;
 
 import com.qmuiteam.qmui.R;
+import com.qmuiteam.qmui.util.QMUIViewHelper;
 
 /**
  * 使按钮能方便地指定圆角、边框颜色、边框粗细、背景色
@@ -34,7 +35,7 @@ public class QMUIRoundButton extends Button {
     }
 
     public QMUIRoundButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        super(context, attrs, R.attr.QMUIButtonStyle);
         init(context, attrs, R.attr.QMUIButtonStyle);
     }
 
@@ -45,6 +46,6 @@ public class QMUIRoundButton extends Button {
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
         QMUIRoundButtonDrawable bg = QMUIRoundButtonDrawable.fromAttributeSet(context, attrs, defStyleAttr);
-        setBackgroundDrawable(bg);
+        QMUIViewHelper.setBackgroundKeepingPadding(this, bg);
     }
 }
